@@ -12,3 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 62716b388480b7444935260d672666e3, type: 3}
   m_Name: CustomRP
   m_EditorClassIdentifier: 
+  _useDynamicBatching: 0
+  _useGPUInstancing: 0
+  _useSRPBatcher: 0
