@@ -6,6 +6,7 @@ public class CustomRenderPipeline : RenderPipeline
 {
     public CustomRenderPipeline()
     {
+        GraphicsSettings.lightsUseLinearIntensity = true;
     }
 
     protected override void Render(ScriptableRenderContext context, Camera[] cameras)

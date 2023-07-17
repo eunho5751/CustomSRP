@@ -5,11 +5,14 @@ public partial class CameraRenderer
 {
     private static string _sampleName = "Render Camera";
     private static readonly ShaderTagId _unlitShaderTagId = new("SRPDefaultUnlit");
+    private static readonly ShaderTagId _litShaderTagId = new("CustomLit");
 
     private CustomRenderPipeline _pipeline;
     private ScriptableRenderContext _context;
     private Camera _camera;
-    private readonly CommandBuffer _buffer = new();
+    private readonly CommandBuffer _buffer = new() { name = _sampleName };
+
+    private readonly Lighting _lighting = new();
 
     public CameraRenderer(CustomRenderPipeline pipeline)
     {
@@ -32,6 +35,7 @@ public partial class CameraRenderer
         CullingResults cullingResults = _context.Cull(ref cullingParams);
 
         Setup();
+        _lighting.Setup(_context, cullingResults);
         DrawVisibleGeometry(cullingResults, _pipeline.UseDynamicBatching, _pipeline.UseGPUInstancing);
 #if UNITY_EDITOR
         DrawUnsupportedShaders(cullingResults);
@@ -59,6 +63,7 @@ public partial class CameraRenderer
             enableDynamicBatching = useDynamicBatching,
             enableInstancing = useGPUInstancing
         };
+        drawingSettings.SetShaderPassName(1, _litShaderTagId);
         FilteringSettings filteringSettings = new(RenderQueueRange.opaque);
         _context.DrawRenderers(cullingResults, ref drawingSettings, ref filteringSettings);
 
