@@ -32,15 +32,22 @@ public partial class CameraRenderer
         {
             return;
         }
+        var shadowSettings = _pipeline.PipelineAsset.ShadowSettings;
+        cullingParams.shadowDistance = Mathf.Min(shadowSettings.MaxDistance, _camera.farClipPlane);
         CullingResults cullingResults = _context.Cull(ref cullingParams);
 
+        _buffer.BeginSample(_sampleName);
+        ExecuteBuffer();
+        _lighting.Setup(_context, cullingResults, shadowSettings);
+        _buffer.EndSample(_sampleName);
+
         Setup();
-        _lighting.Setup(_context, cullingResults);
-        DrawVisibleGeometry(cullingResults, _pipeline.UseDynamicBatching, _pipeline.UseGPUInstancing);
+        DrawVisibleGeometry(cullingResults, _pipeline.PipelineAsset.UseDynamicBatching, _pipeline.PipelineAsset.UseGPUInstancing);
 #if UNITY_EDITOR
         DrawUnsupportedShaders(cullingResults);
         DrawGizmos();
 #endif
+        _lighting.Cleanup();
         Submit();
     }
 

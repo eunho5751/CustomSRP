@@ -4,8 +4,11 @@ using UnityEngine.Rendering;
 
 public class CustomRenderPipeline : RenderPipeline
 {
-    public CustomRenderPipeline()
+    public CustomRenderPipeline(CustomRenderPipelineAsset pipelineAsset)
     {
+        PipelineAsset = pipelineAsset;
+
+        GraphicsSettings.useScriptableRenderPipelineBatching = pipelineAsset.UseSRPBatcher;
         GraphicsSettings.lightsUseLinearIntensity = true;
     }
 
@@ -18,11 +21,5 @@ public class CustomRenderPipeline : RenderPipeline
         }
     }
 
-    public bool UseDynamicBatching { get; set; }
-    public bool UseGPUInstancing { get; set; }
-    public bool UseSRPBatcher
-    {
-        get => GraphicsSettings.useScriptableRenderPipelineBatching;
-        set => GraphicsSettings.useScriptableRenderPipelineBatching = value;
-    }
+    public CustomRenderPipelineAsset PipelineAsset { get; }
 }
