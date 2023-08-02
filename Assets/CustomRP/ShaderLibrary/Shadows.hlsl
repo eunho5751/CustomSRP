@@ -14,11 +14,13 @@ struct PerFragmentShadowData
 struct DirectionalShadowData
 {
 	float strength;
+	float normalBias;
 };
 
 CBUFFER_START(_CustomShadows)
 	float4 _ShadowDistanceFade;
 	int _CascadeCount;
+	float4 _CascadeData[MAX_CASCADE_COUNT];
 	float4 _CascadeCullingSpheres[MAX_CASCADE_COUNT];
 	float4x4 _DirectionalShadowMatrices[MAX_SHADOWED_DIRECTIONAL_LIGHT_COUNT * MAX_CASCADE_COUNT];
 	float4 _DirectionalShadowData[MAX_SHADOWED_DIRECTIONAL_LIGHT_COUNT];
@@ -45,7 +47,7 @@ PerFragmentShadowData GetPerFragmentShadowData(Surface surfaceWS)
 		{
 			if (i == _CascadeCount - 1)
 			{
-				data.strength = GetFadedShadowStrength(distSqr, 1.0 / sphere.w, _ShadowDistanceFade.z);
+				data.strength = GetFadedShadowStrength(distSqr, _CascadeData[i].x, _ShadowDistanceFade.z);
 			}
 			break;
 		}
@@ -63,6 +65,7 @@ DirectionalShadowData GetDirectionalShadowData(int lightIndex)
 {
 	DirectionalShadowData shadowData;
 	shadowData.strength = _DirectionalShadowData[lightIndex].x;
+	shadowData.normalBias = _DirectionalShadowData[lightIndex].y;
 	return shadowData;
 }
 
@@ -73,19 +76,20 @@ float SampleDirectionalShadowAtlas(float3 positionSTS)
 
 float GetDirectionalShadowAttenuation(int lightIndex, Surface surfaceWS)
 {
-	DirectionalShadowData data = GetDirectionalShadowData(lightIndex);
-	if (data.strength <= 0.0)
+	DirectionalShadowData dirShadowData = GetDirectionalShadowData(lightIndex);
+	if (dirShadowData.strength <= 0.0)
 	{
 		return 1.0f;
 	}
 	
-	PerFragmentShadowData perFragData = GetPerFragmentShadowData(surfaceWS);
-	data.strength *= perFragData.strength;
+	PerFragmentShadowData perFragShadowData = GetPerFragmentShadowData(surfaceWS);
+	dirShadowData.strength *= perFragShadowData.strength;
 
-	int tileIndex = lightIndex * _CascadeCount + perFragData.cascadeIndex;
-	float3 positionSTS = mul(_DirectionalShadowMatrices[tileIndex], float4(surfaceWS.position, 1.0)).xyz;
+	float3 normalBias = surfaceWS.normal * (dirShadowData.normalBias * _CascadeData[perFragShadowData.cascadeIndex].y);
+	int tileIndex = lightIndex * _CascadeCount + perFragShadowData.cascadeIndex;
+	float3 positionSTS = mul(_DirectionalShadowMatrices[tileIndex], float4(surfaceWS.position + normalBias, 1.0)).xyz;
 	float shadow = SampleDirectionalShadowAtlas(positionSTS);
-	return lerp(1.0, shadow, data.strength);
+	return lerp(1.0, shadow, dirShadowData.strength);
 }
 
 #endif
