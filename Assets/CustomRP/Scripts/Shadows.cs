@@ -7,6 +7,7 @@ public class Shadows
     {
         public int VisibleLightIndex;
         public float SlopeScaleBias;
+        public float NearPlaneOffset;
     }
 
     private const string _bufferName = "Shadows";
@@ -54,15 +55,16 @@ public class Shadows
         
         if (_shadowedDirectionalLightCount < ShadowSettings.MaxShadowedDirectionalLightCount)
         {
-            _shadowedDirectionalLights[_shadowedDirectionalLightCount] = new() 
+            _shadowedDirectionalLights[_shadowedDirectionalLightCount] = new()
             {
                 VisibleLightIndex = visibleLightIndex,
-                SlopeScaleBias = light.shadowBias
+                SlopeScaleBias = light.shadowBias,
+                NearPlaneOffset = light.shadowNearPlane
             };
             _dirLightShadowData[_shadowedDirectionalLightCount] = new()
             {
                 x = light.shadowStrength,
-                y = light.shadowNormalBias
+                y = light.shadowNormalBias,
             };
             _shadowedDirectionalLightCount++;
         }
@@ -123,7 +125,7 @@ public class Shadows
 
         for (int i = 0; i < shadowSettings.CascadeCount; i++)
         {
-            _cullingResults.ComputeDirectionalShadowMatricesAndCullingPrimitives(light.VisibleLightIndex, i, shadowSettings.CascadeCount, shadowSettings.CascadeRatio, tileSize, 0f, out Matrix4x4 viewMatrix, out Matrix4x4 projectionMatrix, out ShadowSplitData splitData);
+            _cullingResults.ComputeDirectionalShadowMatricesAndCullingPrimitives(light.VisibleLightIndex, i, shadowSettings.CascadeCount, shadowSettings.CascadeRatio, tileSize, light.NearPlaneOffset, out Matrix4x4 viewMatrix, out Matrix4x4 projectionMatrix, out ShadowSplitData splitData);
             
             // Culling spheres of all lights are equivalent.
             if (index == 0)
