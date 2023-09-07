@@ -12,21 +12,28 @@ public class CustomShaderGUI : ShaderGUI
 
     public override void OnGUI(MaterialEditor materialEditor, MaterialProperty[] properties)
     {
-        base.OnGUI(materialEditor, properties);
-
-        _editor = materialEditor;
-        _materials = materialEditor.targets;
-        _properties = properties;
-
-        EditorGUILayout.Space();
-
-        _showPresets = EditorGUILayout.Foldout(_showPresets, "Presets", true);
-        if (_showPresets)
+        EditorGUI.BeginChangeCheck();
         {
-            OpaquePreset();
-            ClipPreset();
-            FadePreset();
-            TransparentPreset();
+            base.OnGUI(materialEditor, properties);
+
+            _editor = materialEditor;
+            _materials = materialEditor.targets;
+            _properties = properties;
+
+            EditorGUILayout.Space();
+
+            _showPresets = EditorGUILayout.Foldout(_showPresets, "Presets", true);
+            if (_showPresets)
+            {
+                OpaquePreset();
+                ClipPreset();
+                FadePreset();
+                TransparentPreset();
+            }
+        }
+        if (EditorGUI.EndChangeCheck())
+        {
+            SetShadowCasterPass();
         }
     }
 
@@ -49,6 +56,7 @@ public class CustomShaderGUI : ShaderGUI
             SrcBlend = BlendMode.One;
             DstBlend = BlendMode.Zero;
             ZWrite = true;
+            Shadows = ShadowMode.On;
             RenderQueue = RenderQueue.Geometry;
         }
     }
@@ -62,6 +70,7 @@ public class CustomShaderGUI : ShaderGUI
             SrcBlend = BlendMode.One;
             DstBlend = BlendMode.Zero;
             ZWrite = true;
+            Shadows = ShadowMode.Clip;
             RenderQueue = RenderQueue.AlphaTest;
         }
     }
@@ -75,6 +84,7 @@ public class CustomShaderGUI : ShaderGUI
             SrcBlend = BlendMode.SrcAlpha;
             DstBlend = BlendMode.OneMinusSrcAlpha;
             ZWrite = false;
+            Shadows = ShadowMode.Dither;
             RenderQueue = RenderQueue.Transparent;
         }
     }
@@ -88,7 +98,21 @@ public class CustomShaderGUI : ShaderGUI
             SrcBlend = BlendMode.One;
             DstBlend = BlendMode.OneMinusSrcAlpha;
             ZWrite = false;
+            Shadows = ShadowMode.Dither;
             RenderQueue = RenderQueue.Transparent;
+        }
+    }
+
+    private void SetShadowCasterPass()
+    {
+        MaterialProperty shadows = FindProperty("_Shadows", _properties, false);
+        if (shadows == null || shadows.hasMixedValue)
+            return;
+
+        bool enabled = shadows.floatValue < (float)ShadowMode.Off;
+        foreach (Material m in _materials)
+        {
+            m.SetShaderPassEnabled("ShadowCaster", enabled);
         }
     }
 
@@ -151,6 +175,18 @@ public class CustomShaderGUI : ShaderGUI
     private bool ZWrite
     {
         set => SetProperty("_ZWrite", value ? 1f : 0f);
+    }
+
+    private ShadowMode Shadows
+    {
+        set
+        {
+            if (SetProperty("_Shadows", (float)value))
+            {
+                SetKeyword("_SHADOWS_CLIP", value == ShadowMode.Clip);
+                SetKeyword("_SHADOWS_DITHER", value == ShadowMode.Dither);
+            }
+        }
     }
 
     RenderQueue RenderQueue
