@@ -9,6 +9,7 @@ struct Surface
 	float depth;
 	float3 color;
 	float alpha;
+    float dither;
 	float metallic;
 	float smoothness;
 };

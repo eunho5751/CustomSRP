@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using TMPro.EditorUtilities;
+using UnityEngine;
 using UnityEngine.Rendering;
 
 public class Shadows
@@ -18,6 +20,20 @@ public class Shadows
     private static readonly int _cascadeCullingSphereId = Shader.PropertyToID("_CascadeCullingSpheres");
     private static readonly int _cascadeDataId = Shader.PropertyToID("_CascadeData");
     private static readonly int _shadowDistanceFadeId = Shader.PropertyToID("_ShadowDistanceFade");
+    private static readonly int _shadowAtlasSizeId = Shader.PropertyToID("_ShadowAtlasSize");
+
+    private static readonly string[] _dirShadowFilterKeywords =
+    {
+        "_DIRECTIONAL_PCF3",
+        "_DIRECTIONAL_PCF5",
+        "_DIRECTIONAL_PCF7"
+    };
+
+    private static readonly string[] _cascadeBlendKeywords =
+    {
+        "_CASCADE_BLEND_SOFT",
+        "_CASCADE_BLEND_DITHER"
+    };
 
     private readonly CommandBuffer _buffer = new() { name = _bufferName };
     private ScriptableRenderContext _context;
@@ -113,6 +129,10 @@ public class Shadows
         cascadeFade = 1f / (1f - cascadeFade * cascadeFade);
         _buffer.SetGlobalVector(_shadowDistanceFadeId, new Vector4(1f / _shadowSettings.MaxDistance, 1f / _shadowSettings.DistanceFade, cascadeFade));
 
+        SetKeywords(_dirShadowFilterKeywords, (int)_shadowSettings.Directional.Filter - 1);
+        SetKeywords(_cascadeBlendKeywords, (int)_shadowSettings.Directional.CascadeBlend - 1);
+        _buffer.SetGlobalVector(_shadowAtlasSizeId, new Vector4(atlasSize, 1f / atlasSize));
+
         _buffer.EndSample(_bufferName);
         ExecuteBuffer();
     }
@@ -123,6 +143,7 @@ public class Shadows
         var shadowDrawingSettings = new ShadowDrawingSettings(_cullingResults, light.VisibleLightIndex, BatchCullingProjectionType.Orthographic);
         var shadowSettings = _shadowSettings.Directional;
 
+        float cullingFactor = Mathf.Max(0f, 0.8f - _shadowSettings.Directional.CascadeFade);
         for (int i = 0; i < shadowSettings.CascadeCount; i++)
         {
             _cullingResults.ComputeDirectionalShadowMatricesAndCullingPrimitives(light.VisibleLightIndex, i, shadowSettings.CascadeCount, shadowSettings.CascadeRatio, tileSize, light.NearPlaneOffset, out Matrix4x4 viewMatrix, out Matrix4x4 projectionMatrix, out ShadowSplitData splitData);
@@ -134,10 +155,12 @@ public class Shadows
                 SetCascadeData(i, cullingSphere, tileSize);
             }
 
+            splitData.shadowCascadeBlendCullingFactor = cullingFactor;
+            shadowDrawingSettings.splitData = splitData;
+
             int tileIndex = index * shadowSettings.CascadeCount + i;
             Vector2 tileOffset = new(tileIndex % split, tileIndex / split);
             _dirShadowMatrices[tileIndex] = ConvertToAtlasMatrix(projectionMatrix * viewMatrix, tileOffset, split);
-            shadowDrawingSettings.splitData = splitData;
             _buffer.SetViewport(new Rect(tileOffset * tileSize, new Vector2(tileSize, tileSize)));
             _buffer.SetViewProjectionMatrices(viewMatrix, projectionMatrix);
             _buffer.SetGlobalDepthBias(0f, light.SlopeScaleBias);
@@ -149,11 +172,17 @@ public class Shadows
 
     private void SetCascadeData(int index, Vector4 cullingSphere, int tileSize)
     {
-        _cascadeData[index].x = 1f / (cullingSphere.w * cullingSphere.w);
-        _cascadeData[index].y = (2f * cullingSphere.w / tileSize) * 1.4142136f;
+        float texelSize = 2f * cullingSphere.w / tileSize;
+        float filterSize = texelSize * ((float)_shadowSettings.Directional.Filter + 1f);
 
+        cullingSphere.w -= filterSize;
         cullingSphere.w *= cullingSphere.w;
         _cascadeCullingSpheres[index] = cullingSphere;
+
+        _cascadeData[index] = new Vector4(
+                1f / cullingSphere.w,
+                filterSize * 1.4142136f
+            );
     }
 
     private Matrix4x4 ConvertToAtlasMatrix(Matrix4x4 m, Vector2 offset, int split)
@@ -180,6 +209,18 @@ public class Shadows
         m.m22 = 0.5f * (m.m22 + m.m32);
         m.m23 = 0.5f * (m.m23 + m.m33);
         return m;
+    }
+
+    private void SetKeywords(IReadOnlyList<string> keywords, int enabledIndex)
+    {
+        if (enabledIndex >= 0)
+            _buffer.EnableShaderKeyword(keywords[enabledIndex]);
+        for (int i = 0; i < keywords.Count; i++)
+        {
+            if (i == enabledIndex)
+                continue;
+            _buffer.DisableShaderKeyword(keywords[i]);
+        }
     }
 
     private void ExecuteBuffer()

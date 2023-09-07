@@ -8,6 +8,10 @@ CBUFFER_START(UnityPerDraw)
 	real4 unity_WorldTransformParams;
 CBUFFER_END
 
+CBUFFER_START(UnityPerCamera)
+	float4 _ScreenParams;
+CBUFFER_END
+
 float4x4 unity_MatrixPreviousM;
 float4x4 unity_MatrixPreviousMI;
 float4x4 unity_MatrixVP;

@@ -17,10 +17,28 @@ public class ShadowSettings
         _8192 = 8192
     }
 
+    public enum FilterMode
+    {
+        PCF2x2,
+        PCF3x3,
+        PCF5x5,
+        PCF7x7,
+    }
+
+    public enum CascadeBlendMode
+    {
+        Hard,
+        Soft,
+        Dither
+    }
+
     [Serializable]
     public class DirectionalSettings
     {
         public ShadowMapSize AtlasSize = ShadowMapSize._1024;
+        public FilterMode Filter = FilterMode.PCF2x2;
+        public CascadeBlendMode CascadeBlend = CascadeBlendMode.Hard;
+
         [Range(1, 4)]
         public int CascadeCount = 4;
         [Range(0f, 1f)]
