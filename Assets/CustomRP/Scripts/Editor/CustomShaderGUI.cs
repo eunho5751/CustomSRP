@@ -20,6 +20,8 @@ public class CustomShaderGUI : ShaderGUI
             _materials = materialEditor.targets;
             _properties = properties;
 
+            BakedEmission();
+
             EditorGUILayout.Space();
 
             _showPresets = EditorGUILayout.Foldout(_showPresets, "Presets", true);
@@ -113,6 +115,19 @@ public class CustomShaderGUI : ShaderGUI
         foreach (Material m in _materials)
         {
             m.SetShaderPassEnabled("ShadowCaster", enabled);
+        }
+    }
+
+    private void BakedEmission()
+    {
+        EditorGUI.BeginChangeCheck();
+        _editor.LightmapEmissionProperty();
+        if (EditorGUI.EndChangeCheck())
+        {
+            foreach (Material m in _editor.targets)
+            {
+                m.globalIlluminationFlags &= ~MaterialGlobalIlluminationFlags.EmissiveIsBlack;
+            }
         }
     }
 

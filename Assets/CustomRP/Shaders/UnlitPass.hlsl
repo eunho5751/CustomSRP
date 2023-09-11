@@ -32,6 +32,7 @@ float4 UnlitPassFragment(Varyings input) : SV_TARGET
 {
 	UNITY_SETUP_INSTANCE_ID(input);
 	float4 base = GetBase(input.baseUV);
+	base.rgb += GetEmission(input.baseUV);
 
 	#if defined(_CLIPPING) // #ifdef _CLIPPING
 		clip(base.a - GetCutoff(input.baseUV));
