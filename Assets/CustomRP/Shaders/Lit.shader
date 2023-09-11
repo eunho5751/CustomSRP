@@ -2,6 +2,9 @@ Shader "CustomRP/Lit"
 {
 	Properties
 	{
+		[HideInInspector] _MainTex("Texture for Lightmap", 2D) = "white" {}
+		[HideInInspector] _Color("Color for Lightmap", Color) = (0.5, 0.5, 0.5, 1.0)
+
 		_BaseMap("Texture", 2D) = "white" {}
 		_BaseColor("Color", Color) = (0.5, 0.5, 0.5, 1.0)
 		[Toggle(_CLIPPING)] _Clipping("Alpha Clipping", Float) = 0
