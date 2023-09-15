@@ -37,3 +37,38 @@ _4._ **Transparent** (Specular Reflection is not affected by alpha) → Premulti
 
 ### GPU Instancing with Lit material
 ![image](https://github.com/eunho5751/CustomSRP/assets/29402080/e86e201a-eb2c-4ad5-ba8c-59a4707e9dd6)
+
+## Chapter 4. Directional Shadows
+### Shadow Map
+<img src = "https://github.com/eunho5751/CustomSRP/assets/29402080/b41b8e51-2b9b-45d1-8d3f-78e43da10edb" width="50%" height="50%">
+
+### Self Shadowing (Shadow Acne)
+<img src = "https://github.com/eunho5751/CustomSRP/assets/29402080/5ec7d017-f01f-419b-ba41-5c39b41c2457" width="50%" height="50%">
+
+### Depth Bias / Normal Bias (Solutions to Shadow Acne)
+<img src = "https://github.com/eunho5751/CustomSRP/assets/29402080/6389bbec-5bbd-46bd-a736-3e5b3e279152" width="60%" height="60%">
+
+### Shadow Cascades
+<img src = "https://github.com/eunho5751/CustomSRP/assets/29402080/e92c52d9-34b8-49ea-8c12-018d6b6fd70c" width="50%" height="50%">
+<br/>
+Cascade Count 4
+
+<br/>
+<br/>
+
+<img src = "https://github.com/eunho5751/CustomSRP/assets/29402080/0a7d09b5-ede0-4f0d-9f43-502434e31bb8" width="50%" height="50%">
+<br/>
+Cascade Count 1 (Left) / Cascade Count 4 (Right)
+
+### Clipped Shadows (Artifacts caused by Shadow Pancaking)
+<img src = "https://github.com/eunho5751/CustomSRP/assets/29402080/c08cb333-603b-4bac-bdce-20f0b65a9b07" width="75%" height="75%">
+
+### Near Plane Offset (A Solution to the above artifacts)
+<img src = "https://github.com/eunho5751/CustomSRP/assets/29402080/081c964e-f581-4a90-842a-44d761e55ae3" width="75%" height="75%">
+
+### PCF Filtering
+<img src = "https://github.com/eunho5751/CustomSRP/assets/29402080/b148b63d-9303-4e61-9e67-60e717bbc95a" width="75%" height="75%">
+
+### Cascade Blending
+<img src = "https://github.com/eunho5751/CustomSRP/assets/29402080/3ce3034a-fc9e-4da6-a3ce-2448afd24db2" width="50%" height="50%">
+
