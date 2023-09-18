@@ -35,7 +35,7 @@ Varyings ShadowCasterPassVertex(Attributes input)
 	return output;
 }
 
-float4 ShadowCasterPassFragment(Varyings input) : SV_TARGET
+void ShadowCasterPassFragment(Varyings input)
 {
 	UNITY_SETUP_INSTANCE_ID(input);
 	float4 base = GetBase(input.baseUV);
@@ -46,7 +46,6 @@ float4 ShadowCasterPassFragment(Varyings input) : SV_TARGET
 		float dither = InterleavedGradientNoise(input.positionCS.xy, 0);
 		clip(base.a - dither);
 	#endif
-    return base;
 }
 
 #endif

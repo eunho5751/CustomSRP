@@ -29,6 +29,7 @@ public class MeshBall : MonoBehaviour
         var metallics = new float[1023];
         var smoothnesses = new float[1023];
         var lightProbes = new SphericalHarmonicsL2[1023];
+        var occlusionProbes = new Vector4[10234];
 
         for (int i = 0; i< _matrices.Length; i++)
         {
@@ -50,8 +51,9 @@ public class MeshBall : MonoBehaviour
             {
                 positions[i] = _matrices[i].GetColumn(3);
             }
-            LightProbes.CalculateInterpolatedLightAndOcclusionProbes(positions, lightProbes, null);
+            LightProbes.CalculateInterpolatedLightAndOcclusionProbes(positions, lightProbes, occlusionProbes);
             _block.CopySHCoefficientArraysFrom(lightProbes);
+            _block.CopyProbeOcclusionArrayFrom(occlusionProbes);
         }
     }
 

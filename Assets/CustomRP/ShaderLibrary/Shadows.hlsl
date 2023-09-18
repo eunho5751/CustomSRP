@@ -18,6 +18,12 @@
 #define MAX_CASCADE_COUNT 4
 #define SHADOW_SAMPLER sampler_linear_clamp_compare
 
+struct ShadowMask
+{
+    bool distance;
+    float4 shadows;
+};
+
 struct PerFragmentShadowData
 {
 	int cascadeIndex;
@@ -27,6 +33,7 @@ struct PerFragmentShadowData
 
 struct DirectionalShadowData
 {
+	int tileIndex;
 	float strength;
 	float normalBias;
 };
@@ -53,7 +60,7 @@ PerFragmentShadowData GetPerFragmentShadowData(Surface surfaceWS)
 {
 	PerFragmentShadowData data;
     data.cascadeBlend = 1.0;
-	data.strength = GetFadedShadowStrength(surfaceWS.depth, _ShadowDistanceFade.x, _ShadowDistanceFade.y);
+    data.strength = GetFadedShadowStrength(surfaceWS.depth, _ShadowDistanceFade.x, _ShadowDistanceFade.y);
 	
 	for (int i = 0; i < _CascadeCount; i++)
 	{
@@ -101,6 +108,7 @@ PerFragmentShadowData GetPerFragmentShadowData(Surface surfaceWS)
 DirectionalShadowData GetDirectionalShadowData(int lightIndex)
 {
 	DirectionalShadowData shadowData;
+	shadowData.tileIndex = _DirectionalShadowData[lightIndex].w;
 	shadowData.strength = _DirectionalShadowData[lightIndex].x;
 	shadowData.normalBias = _DirectionalShadowData[lightIndex].y;
 	return shadowData;
@@ -113,47 +121,85 @@ float SampleDirectionalShadowAtlas(float3 positionSTS)
 
 float FilterDirectionalShadow(float3 positionSTS)
 {
-#ifdef DIRECTIONAL_FILTER_SETUP
-		float weights[DIRECTIONAL_FILTER_SAMPLES];
-		float2 positions[DIRECTIONAL_FILTER_SAMPLES];
-		float4 size = _ShadowAtlasSize.yyxx;
-		DIRECTIONAL_FILTER_SETUP(size, positionSTS.xy, weights, positions);
-		float shadow = 0;
-		for (int i = 0; i < DIRECTIONAL_FILTER_SAMPLES; i++)
-		{
-			shadow += weights[i] * SampleDirectionalShadowAtlas(float3(positions[i].xy, positionSTS.z));
-		}
-		return shadow;
-#else
-    return SampleDirectionalShadowAtlas(positionSTS);
-#endif
+	#if defined(DIRECTIONAL_FILTER_SETUP)
+			float weights[DIRECTIONAL_FILTER_SAMPLES];
+			float2 positions[DIRECTIONAL_FILTER_SAMPLES];
+			float4 size = _ShadowAtlasSize.yyxx;
+			DIRECTIONAL_FILTER_SETUP(size, positionSTS.xy, weights, positions);
+			float shadow = 0;
+			for (int i = 0; i < DIRECTIONAL_FILTER_SAMPLES; i++)
+			{
+				shadow += weights[i] * SampleDirectionalShadowAtlas(float3(positions[i].xy, positionSTS.z));
+			}
+			return shadow;
+	#else
+		return SampleDirectionalShadowAtlas(positionSTS);
+	#endif
 }
 
-float GetDirectionalShadowAttenuation(int lightIndex, Surface surfaceWS)
+float GetCascadedShadow(DirectionalShadowData dirShadowData, PerFragmentShadowData perFragShadowData, Surface surfaceWS)
 {
-	#if !defined(_RECEIVE_SHADOWS)
-		return 1.0;
-	#endif
-
-	DirectionalShadowData dirShadowData = GetDirectionalShadowData(lightIndex);
-	if (dirShadowData.strength <= 0.0)
-	{
-		return 1.0f;
-	}
-	
-	PerFragmentShadowData perFragShadowData = GetPerFragmentShadowData(surfaceWS);
-	dirShadowData.strength *= perFragShadowData.strength;
     float3 normalBias = surfaceWS.normal * (dirShadowData.normalBias * _CascadeData[perFragShadowData.cascadeIndex].y);
-	int tileIndex = lightIndex * _CascadeCount + perFragShadowData.cascadeIndex;
-	float3 positionSTS = mul(_DirectionalShadowMatrices[tileIndex], float4(surfaceWS.position + normalBias, 1.0)).xyz;
-	float shadow = FilterDirectionalShadow(positionSTS);
-	if (perFragShadowData.cascadeBlend < 1.0)
+	int tileIndex = dirShadowData.tileIndex + perFragShadowData.cascadeIndex;
+    float3 positionSTS = mul(_DirectionalShadowMatrices[tileIndex], float4(surfaceWS.position + normalBias, 1.0)).xyz;
+    float shadow = FilterDirectionalShadow(positionSTS);
+    if (perFragShadowData.cascadeBlend < 1.0)
     {
         normalBias = surfaceWS.normal * (dirShadowData.normalBias * _CascadeData[perFragShadowData.cascadeIndex + 1].y);
         positionSTS = mul(_DirectionalShadowMatrices[tileIndex + 1], float4(surfaceWS.position + normalBias, 1.0)).xyz;
         shadow = lerp(FilterDirectionalShadow(positionSTS), shadow, perFragShadowData.cascadeBlend);
     }
-    return lerp(1.0, shadow, dirShadowData.strength);
+    return shadow;
+}
+
+float GetBakedShadow(ShadowMask shadowMask)
+{
+    float shadow = 1.0;
+	if (shadowMask.distance)
+    {
+        shadow = shadowMask.shadows.r;
+    }
+    return shadow;
+}
+
+float GetBakedShadow(ShadowMask shadowMask, float strength)
+{
+	if (shadowMask.distance)
+    {
+        return lerp(1.0, GetBakedShadow(shadowMask), strength);
+    }
+    return 1.0;
+}
+
+float MixBakedAndRealtimeShadows(ShadowMask shadowMask, float shadow, float fragShadowStrength, float lightShadowStrength)
+{
+    float baked = GetBakedShadow(shadowMask);
+    if (shadowMask.distance)
+    {
+        shadow = lerp(baked, shadow, fragShadowStrength);
+        return lerp(1.0, shadow, lightShadowStrength);
+    }
+    return lerp(1.0, shadow, lightShadowStrength * fragShadowStrength);
+}
+
+float GetDirectionalShadowAttenuation(int lightIndex, Surface surfaceWS, ShadowMask shadowMask)
+{
+	#if !defined(_RECEIVE_SHADOWS)
+		return 1.0;
+	#endif
+	
+	DirectionalShadowData dirShadowData = GetDirectionalShadowData(lightIndex);
+    PerFragmentShadowData perFragShadowData = GetPerFragmentShadowData(surfaceWS);
+	if (dirShadowData.strength * perFragShadowData.strength <= 0.0)
+	{
+        return GetBakedShadow(shadowMask, abs(dirShadowData.strength));
+    }
+	else
+    {
+        float shadow = GetCascadedShadow(dirShadowData, perFragShadowData, surfaceWS);
+        shadow = MixBakedAndRealtimeShadows(shadowMask, shadow, perFragShadowData.strength, dirShadowData.strength);
+        return shadow;
+    }
 }
 
 #endif

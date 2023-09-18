@@ -21,12 +21,12 @@ int GetDirectionalLightCount()
 	return _DirectionalLightCount;
 }
 
-Light GetDirectionalLight(int index, Surface surfaceWS)
+Light GetDirectionalLight(int index, Surface surfaceWS, GI gi)
 {
 	Light light;
 	light.color = _DirectionalLightColors[index].rgb;
 	light.direction = _DirectionalLightDirections[index].xyz;
-	light.attenuation = GetDirectionalShadowAttenuation(index, surfaceWS);
+	light.attenuation = GetDirectionalShadowAttenuation(index, surfaceWS, gi.shadowMask);
 	return light;
 }
 

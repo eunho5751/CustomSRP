@@ -13,17 +13,17 @@ MonoBehaviour:
   m_Name: CustomRP
   m_EditorClassIdentifier: 
   _useDynamicBatching: 0
-  _useGPUInstancing: 1
+  _useGPUInstancing: 0
   _useSRPBatcher: 0
   _shadowSettings:
-    MaxDistance: 100
+    MaxDistance: 20
     DistanceFade: 0.1
     _directional:
       AtlasSize: 4096
       Filter: 2
       CascadeBlend: 1
       CascadeCount: 4
-      CascadeRatio1: 0.15
-      CascadeRatio2: 0.2
-      CascadeRatio3: 0.25
+      CascadeRatio1: 0.3
+      CascadeRatio2: 0.4
+      CascadeRatio3: 0.5
       CascadeFade: 0.3
