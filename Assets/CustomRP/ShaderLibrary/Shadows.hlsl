@@ -20,6 +20,7 @@
 
 struct ShadowMask
 {
+	bool always;
     bool distance;
     float4 shadows;
 };
@@ -155,7 +156,7 @@ float GetCascadedShadow(DirectionalShadowData dirShadowData, PerFragmentShadowDa
 float GetBakedShadow(ShadowMask shadowMask)
 {
     float shadow = 1.0;
-	if (shadowMask.distance)
+	if (shadowMask.always || shadowMask.distance)
     {
         shadow = shadowMask.shadows.r;
     }
@@ -164,7 +165,7 @@ float GetBakedShadow(ShadowMask shadowMask)
 
 float GetBakedShadow(ShadowMask shadowMask, float strength)
 {
-	if (shadowMask.distance)
+	if (shadowMask.always || shadowMask.distance)
     {
         return lerp(1.0, GetBakedShadow(shadowMask), strength);
     }
@@ -174,7 +175,13 @@ float GetBakedShadow(ShadowMask shadowMask, float strength)
 float MixBakedAndRealtimeShadows(ShadowMask shadowMask, float shadow, float fragShadowStrength, float lightShadowStrength)
 {
     float baked = GetBakedShadow(shadowMask);
-    if (shadowMask.distance)
+	if (shadowMask.always)
+	{
+		shadow = lerp(1.0, shadow, fragShadowStrength);
+		shadow = min(baked, shadow);
+		return lerp(1.0, shadow, lightShadowStrength);
+	}
+    else if (shadowMask.distance)
     {
         shadow = lerp(baked, shadow, fragShadowStrength);
         return lerp(1.0, shadow, lightShadowStrength);

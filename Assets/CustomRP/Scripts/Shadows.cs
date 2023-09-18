@@ -37,6 +37,7 @@ public class Shadows
 
     private static readonly string[] _shadowMaskKeywords =
     {
+        "_SHADOW_MASK_ALWAYS",
         "_SHADOW_MASK_DISTANCE"
     };
 
@@ -116,7 +117,7 @@ public class Shadows
         RenderDirectionalShadows();
 
         _buffer.BeginSample(_bufferName);
-        SetKeywords(_shadowMaskKeywords, _useShadowMask ? 0 : -1);
+        SetKeywords(_shadowMaskKeywords, _useShadowMask ? (QualitySettings.shadowmaskMode == ShadowmaskMode.Shadowmask ? 0 : 1) : -1);
         _buffer.EndSample(_bufferName);
         ExecuteBuffer();
     }
