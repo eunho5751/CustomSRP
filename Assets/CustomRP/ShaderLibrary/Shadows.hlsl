@@ -34,9 +34,10 @@ struct PerFragmentShadowData
 
 struct DirectionalShadowData
 {
-	int tileIndex;
 	float strength;
 	float normalBias;
+	int tileIndex;
+	int shadowMaskChannel;
 };
 
 CBUFFER_START(_CustomShadows)
@@ -109,9 +110,10 @@ PerFragmentShadowData GetPerFragmentShadowData(Surface surfaceWS)
 DirectionalShadowData GetDirectionalShadowData(int lightIndex)
 {
 	DirectionalShadowData shadowData;
-	shadowData.tileIndex = _DirectionalShadowData[lightIndex].w;
 	shadowData.strength = _DirectionalShadowData[lightIndex].x;
 	shadowData.normalBias = _DirectionalShadowData[lightIndex].y;
+	shadowData.tileIndex = _DirectionalShadowData[lightIndex].z;
+	shadowData.shadowMaskChannel = _DirectionalShadowData[lightIndex].w;
 	return shadowData;
 }
 
@@ -153,28 +155,28 @@ float GetCascadedShadow(DirectionalShadowData dirShadowData, PerFragmentShadowDa
     return shadow;
 }
 
-float GetBakedShadow(ShadowMask shadowMask)
+float GetBakedShadow(ShadowMask shadowMask, int channel)
 {
     float shadow = 1.0;
 	if (shadowMask.always || shadowMask.distance)
     {
-        shadow = shadowMask.shadows.r;
+        shadow = channel >= 0 ? shadowMask.shadows[channel] : 1.0;
     }
     return shadow;
 }
 
-float GetBakedShadow(ShadowMask shadowMask, float strength)
+float GetBakedShadow(ShadowMask shadowMask, int channel, float strength)
 {
 	if (shadowMask.always || shadowMask.distance)
     {
-        return lerp(1.0, GetBakedShadow(shadowMask), strength);
+        return lerp(1.0, GetBakedShadow(shadowMask, channel), strength);
     }
     return 1.0;
 }
 
-float MixBakedAndRealtimeShadows(ShadowMask shadowMask, float shadow, float fragShadowStrength, float lightShadowStrength)
+float MixBakedAndRealtimeShadows(ShadowMask shadowMask, int shadowMaskChannel, float shadow, float fragShadowStrength, float lightShadowStrength)
 {
-    float baked = GetBakedShadow(shadowMask);
+    float baked = GetBakedShadow(shadowMask, shadowMaskChannel);
 	if (shadowMask.always)
 	{
 		shadow = lerp(1.0, shadow, fragShadowStrength);
@@ -199,12 +201,12 @@ float GetDirectionalShadowAttenuation(int lightIndex, Surface surfaceWS, ShadowM
     PerFragmentShadowData perFragShadowData = GetPerFragmentShadowData(surfaceWS);
 	if (dirShadowData.strength * perFragShadowData.strength <= 0.0)
 	{
-        return GetBakedShadow(shadowMask, abs(dirShadowData.strength));
+        return GetBakedShadow(shadowMask, dirShadowData.shadowMaskChannel, abs(dirShadowData.strength));
     }
 	else
     {
         float shadow = GetCascadedShadow(dirShadowData, perFragShadowData, surfaceWS);
-        shadow = MixBakedAndRealtimeShadows(shadowMask, shadow, perFragShadowData.strength, dirShadowData.strength);
+        shadow = MixBakedAndRealtimeShadows(shadowMask, dirShadowData.shadowMaskChannel, shadow, perFragShadowData.strength, dirShadowData.strength);
         return shadow;
     }
 }

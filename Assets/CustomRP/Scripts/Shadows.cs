@@ -90,7 +90,8 @@ public class Shadows
             {
                 _dirLightShadowData[visibleLightIndex] = new()
                 {
-                    x = -light.shadowStrength
+                    x = -light.shadowStrength,
+                    w = bakingOutput.occlusionMaskChannel
                 };
             }
             else
@@ -105,7 +106,8 @@ public class Shadows
                 {
                     x = light.shadowStrength,
                     y = light.shadowNormalBias,
-                    w = _shadowSettings.Directional.CascadeCount * _shadowedDirectionalLightCount
+                    z = _shadowSettings.Directional.CascadeCount * _shadowedDirectionalLightCount,
+                    w = bakingOutput.occlusionMaskChannel
                 };
                 _shadowedDirectionalLightCount++;
             }
