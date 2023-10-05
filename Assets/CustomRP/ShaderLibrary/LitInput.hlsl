@@ -2,6 +2,7 @@
 #define CUSTOM_LIT_INPUT_INCLUDED
 
 TEXTURE2D(_BaseMap);
+TEXTURE2D(_MaskMap);
 TEXTURE2D(_EmissionMap);
 SAMPLER(sampler_BaseMap);
 
@@ -11,6 +12,7 @@ UNITY_INSTANCING_BUFFER_START(UnityPerMaterial)
 	UNITY_DEFINE_INSTANCED_PROP(float4, _EmissionColor)
 	UNITY_DEFINE_INSTANCED_PROP(float, _Cutoff)
 	UNITY_DEFINE_INSTANCED_PROP(float, _Metallic)
+	UNITY_DEFINE_INSTANCED_PROP(float, _Occlusion)
 	UNITY_DEFINE_INSTANCED_PROP(float, _Smoothness)
 	UNITY_DEFINE_INSTANCED_PROP(float, _Fresnel)
 UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
@@ -28,6 +30,18 @@ float4 GetBase(float2 baseUV)
 	return map * color;
 }
 
+float4 GetMask(float2 baseUV)
+{
+    return SAMPLE_TEXTURE2D(_MaskMap, sampler_BaseMap, baseUV);
+}
+
+float GetOcclusion(float2 baseUV)
+{
+    float strength = UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Occlusion);
+	float occlusion = GetMask(baseUV).g;
+    return lerp(occlusion, 1.0, strength);
+}
+
 float GetCutoff(float2 baseUV)
 {
 	return UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Cutoff);
@@ -35,12 +49,16 @@ float GetCutoff(float2 baseUV)
 
 float GetMetallic(float2 baseUV)
 {
-	return UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Metallic);
+	float metallic = UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Metallic);
+    metallic *= GetMask(baseUV).r;
+    return metallic;
 }
 
 float GetSmoothness(float2 baseUV)
 {
-	return UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Smoothness);
+	float smoothness = UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Smoothness);
+    smoothness *= GetMask(baseUV).a;
+    return smoothness;
 }
 
 float GetFresnel(float2 baseuv)

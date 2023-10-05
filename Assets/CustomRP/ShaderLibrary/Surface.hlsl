@@ -11,6 +11,7 @@ struct Surface
 	float alpha;
     float dither;
 	float metallic;
+    float occlusion;
 	float smoothness;
     float fresnelStrength;
 };

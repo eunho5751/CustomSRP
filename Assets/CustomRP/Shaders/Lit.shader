@@ -12,7 +12,9 @@ Shader "CustomRP/Lit"
 		[Enum(UnityEngine.Rendering.BlendMode)] _SrcBlend("Src Blend", Float) = 1
 		[Enum(UnityEngine.Rendering.BlendMode)] _DstBlend("Dst Blend", Float) = 0
 		[Enum(Off, 0, On, 1)] _ZWrite("Z Write", Float) = 1
+		[NoScaleOffset] _MaskMap("Mask (MODS)", 2D) = "white" {}
 		_Metallic("Metallic", Range(0, 1)) = 0
+		_Occlusion("Occlusion", Range(0, 1)) = 1
 		_Smoothness("Smoothness", Range(0, 1)) = 0.5
 		_Fresnel("Fresnel", Range(0, 1)) = 1
 		[NoScaleOffset] _EmissionMap("Emission", 2D) = "white" {}
