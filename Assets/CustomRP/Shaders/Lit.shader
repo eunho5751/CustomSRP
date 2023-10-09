@@ -19,6 +19,9 @@ Shader "CustomRP/Lit"
 		_Fresnel("Fresnel", Range(0, 1)) = 1
 		[NoScaleOffset] _EmissionMap("Emission", 2D) = "white" {}
 		[HDR] _EmissionColor("Emission", Color) = (0.0, 0.0, 0.0, 0.0)
+		_DetailMap("Details", 2D) = "linearGrey" {}
+		_DetailAlbedo("Detail Albedo", Range(0, 1)) = 1
+		_DetailSmoothness("Detail Smoothness", Range(0, 1)) = 1
 		[Toggle(_PREMULTIPLY_ALPHA)] _PremultiplyAlpha("Premultiply Alpha", Float) = 0
 		[KeywordEnum(On, Clip, Dither, Off)] _Shadows("Shadows", Float) = 0
 		[Toggle(_RECEIVE_SHADOWS)] _ReceiveShadows("Receive Shadows", Float) = 1
