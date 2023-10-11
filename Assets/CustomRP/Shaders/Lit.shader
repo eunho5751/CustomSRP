@@ -17,11 +17,15 @@ Shader "CustomRP/Lit"
 		_Occlusion("Occlusion", Range(0, 1)) = 1
 		_Smoothness("Smoothness", Range(0, 1)) = 0.5
 		_Fresnel("Fresnel", Range(0, 1)) = 1
+		[NoScaleOffset] _NormalMap("Normals", 2D) = "bump" {}
+		_NormalScale("Normal Scale", Range(0, 1)) = 1
 		[NoScaleOffset] _EmissionMap("Emission", 2D) = "white" {}
 		[HDR] _EmissionColor("Emission", Color) = (0.0, 0.0, 0.0, 0.0)
 		_DetailMap("Details", 2D) = "linearGrey" {}
 		_DetailAlbedo("Detail Albedo", Range(0, 1)) = 1
 		_DetailSmoothness("Detail Smoothness", Range(0, 1)) = 1
+		[NoScaleOffset] _DetailNormalMap("Detail Normals", 2D) = "bump" {}
+		_DetailNormalScale("Detail Normal Scale", Range(0, 1)) = 1
 		[Toggle(_PREMULTIPLY_ALPHA)] _PremultiplyAlpha("Premultiply Alpha", Float) = 0
 		[KeywordEnum(On, Clip, Dither, Off)] _Shadows("Shadows", Float) = 0
 		[Toggle(_RECEIVE_SHADOWS)] _ReceiveShadows("Receive Shadows", Float) = 1
