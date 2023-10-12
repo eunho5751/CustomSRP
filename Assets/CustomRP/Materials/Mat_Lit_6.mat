@@ -12,6 +12,9 @@ Material:
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
+  - _DETAIL_MAP
+  - _MASK_MAP
+  - _NORMAL_MAP
   - _RECEIVE_SHADOWS
   m_InvalidKeywords:
   - _SHADOWS_ON
@@ -88,6 +91,7 @@ Material:
     - _Cull: 2
     - _Cutoff: 0
     - _DetailAlbedo: 1
+    - _DetailMapToggle: 1
     - _DetailNormalMapScale: 1
     - _DetailNormalScale: 1
     - _DetailSmoothness: 1
@@ -97,8 +101,10 @@ Material:
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
+    - _MaskMapToggle: 1
     - _Metallic: 1
     - _Mode: 0
+    - _NormalMapToggle: 1
     - _NormalScale: 1
     - _Occlusion: 0.5
     - _OcclusionStrength: 1
